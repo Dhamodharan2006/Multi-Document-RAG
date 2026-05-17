@@ -1,0 +1,42 @@
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data
+data/uploads/*
+!data/uploads/.gitkeep
+
+# Evaluation reports
+evaluation/reports/*.json
+evaluation/reports/*.csv
+
+# Docker
+qdrant_storage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Chainlit
+.chainlit/
