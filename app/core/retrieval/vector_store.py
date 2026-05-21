@@ -20,6 +20,7 @@ from qdrant_client.http.models import (
     Range,
     ScrollRequest,
     VectorParams,
+    PayloadSchemaType,
 )
 
 from app.config import settings
@@ -36,25 +37,44 @@ class VectorStore:
     """
 
     def __init__(self) -> None:
-        """Initialize Qdrant client connection."""
-        self.client = QdrantClient(
-            host=settings.qdrant_host,
-            port=settings.qdrant_port,
-        )
+        """Initialize Qdrant client connection.
+
+        Connects to Qdrant Cloud when ``QDRANT_URL`` is set (production/Koyeb),
+        otherwise falls back to a local host/port connection (development).
+        """
+        if settings.qdrant_url:
+            # ── Qdrant Cloud (Koyeb production) ──────────────────────────────
+            self.client = QdrantClient(
+                url=settings.qdrant_url,
+                api_key=settings.qdrant_api_key or None,
+            )
+            logger.info(
+                "Qdrant client initialized (cloud): url={} collection={}",
+                settings.qdrant_url,
+                settings.qdrant_collection_name,
+            )
+        else:
+            # ── Local Qdrant (development) ────────────────────────────────────
+            self.client = QdrantClient(
+                host=settings.qdrant_host,
+                port=settings.qdrant_port,
+            )
+            logger.info(
+                "Qdrant client initialized (local): {}:{} collection={}",
+                settings.qdrant_host,
+                settings.qdrant_port,
+                settings.qdrant_collection_name,
+            )
+
         self.collection_name = settings.qdrant_collection_name
         self.vector_size = settings.embedding_dimension
-        logger.info(
-            "Qdrant client initialized: {}:{} collection={}",
-            settings.qdrant_host,
-            settings.qdrant_port,
-            self.collection_name,
-        )
 
     async def ensure_collection(self) -> None:
-        """Create the collection if it does not already exist.
+        """Create the collection and index fields if they do not already exist.
 
         Sets up a vector collection with COSINE distance metric
-        and the configured embedding dimension (3072).
+        and the configured embedding dimension (3072). Also ensures
+        required payload indexes are created for filters.
         """
         def _create() -> None:
             collections = self.client.get_collections().collections
@@ -75,6 +95,27 @@ class VectorStore:
                 )
             else:
                 logger.info("Qdrant collection '{}' already exists", self.collection_name)
+
+            # Ensure payload indexes are created for filtered fields
+            # (required by some Qdrant configurations/cloud tiers to allow filtering)
+            logger.info("Ensuring payload indexes exist in Qdrant...")
+            
+            self.client.create_payload_index(
+                collection_name=self.collection_name,
+                field_name="doc_id",
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
+            self.client.create_payload_index(
+                collection_name=self.collection_name,
+                field_name="doc_type",
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
+            self.client.create_payload_index(
+                collection_name=self.collection_name,
+                field_name="pub_year",
+                field_schema=PayloadSchemaType.INTEGER,
+            )
+            logger.info("Qdrant payload indexes initialized successfully.")
 
         await asyncio.to_thread(_create)
 

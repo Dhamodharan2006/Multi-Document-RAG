@@ -13,12 +13,14 @@ class Settings(BaseSettings):
 
     # Embeddings
     nvidia_api_key: str = ""
-    embedding_model: str = "nvidia/llama-3.2-nemoretriever-300m-embed-v1"
+    embedding_model: str = "nvidia/llama-nemotron-embed-1b-v2"
     embedding_dimension: int = 2048
 
-    # Qdrant
-    qdrant_host: str = "localhost"
-    qdrant_port: int = 6333
+    # Qdrant — set QDRANT_URL for cloud (Koyeb), leave blank for local dev
+    qdrant_url: str = ""           # e.g. https://xxxx.us-east4-0.gcp.cloud.qdrant.io
+    qdrant_api_key: str = ""       # Qdrant Cloud API key
+    qdrant_host: str = "localhost" # used only when QDRANT_URL is not set
+    qdrant_port: int = 6333        # used only when QDRANT_URL is not set
     qdrant_collection_name: str = "academic_papers"
 
     # App

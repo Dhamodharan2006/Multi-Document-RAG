@@ -45,8 +45,8 @@ async def _embed_content_sync(
         "truncate": "NONE",
     }
     
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=headers, json=payload, timeout=30.0)
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
+        response = await client.post(url, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
         

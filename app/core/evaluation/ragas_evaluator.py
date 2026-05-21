@@ -165,8 +165,8 @@ async def _run_ragas_metrics(eval_data: dict) -> dict[str, float]:
                     "encoding_format": "float",
                     "truncate": "NONE",
                 }
-                with httpx.Client() as client:
-                    response = client.post(url, headers=headers, json=payload, timeout=30.0)
+                with httpx.Client(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
+                    response = client.post(url, headers=headers, json=payload)
                     response.raise_for_status()
                     data = response.json()
                 return [item["embedding"] for item in data["data"]]
@@ -184,8 +184,8 @@ async def _run_ragas_metrics(eval_data: dict) -> dict[str, float]:
                     "encoding_format": "float",
                     "truncate": "NONE",
                 }
-                with httpx.Client() as client:
-                    response = client.post(url, headers=headers, json=payload, timeout=30.0)
+                with httpx.Client(timeout=httpx.Timeout(120.0, connect=30.0)) as client:
+                    response = client.post(url, headers=headers, json=payload)
                     response.raise_for_status()
                     data = response.json()
                 return data["data"][0]["embedding"]
